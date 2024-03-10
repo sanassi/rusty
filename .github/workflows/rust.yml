@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: change dir
-    - run: cd basics
+      run: cd basics
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose
