@@ -38,3 +38,17 @@ impl ops::Add<&Matrix> for &Matrix {
         res
     }
 }
+
+impl ops::Sub<&Matrix> for &Matrix {
+    type Output = Matrix;
+    fn sub(self, _rhs: &Matrix) -> Matrix {
+        assert_eq!(self.w, _rhs.w);
+        assert_eq!(self.h, _rhs.h);
+
+        let mut res = Matrix::new(0, _rhs.w, _rhs.h);
+        for (pos, e) in self.data.iter().enumerate() {
+            res.data[pos] = e - _rhs.data[pos];
+        }
+        res
+    }
+}
