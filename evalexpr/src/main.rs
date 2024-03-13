@@ -6,7 +6,8 @@ enum TokenKind {
     Plus,
     Minus,
     Times,
-    Number
+    Number,
+    Divide
 }
 
 #[derive(Debug)]
@@ -32,6 +33,34 @@ fn lex(input: &String) -> VecDeque<Token> {
                     kind: TokenKind::Number,
                     value: Some(s.parse().unwrap())
                 });
+            },
+            '+' => {
+                q.push_back(Token {
+                    kind: TokenKind::Plus,
+                    value: None
+                });
+                i += 1;
+            },
+            '-' => {
+                q.push_back(Token {
+                    kind: TokenKind::Minus,
+                    value: None
+                });
+                i += 1;
+            },
+            '*' => {
+                q.push_back(Token {
+                    kind: TokenKind::Times,
+                    value: None
+                });
+                i += 1;
+            },
+            '/' => {
+                q.push_back(Token {
+                    kind: TokenKind::Divide,
+                    value: None
+                });
+                i += 1;
             },
             _ => i += 1
         }
