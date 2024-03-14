@@ -1,19 +1,54 @@
 use std::io;
 use std::collections::VecDeque;
 
+#[derive(PartialEq)]
 #[derive(Debug)]
 enum TokenKind {
     Plus,
     Minus,
     Times,
     Number,
-    Divide
+    Divide,
+    RParen,
+    LParen
 }
 
 #[derive(Debug)]
 struct Token {
     kind: TokenKind,
     value: Option<i32>
+}
+
+impl TokenKind {
+    fn precedence(&self) -> i32 {
+        match self {
+            TokenKind::RParen | TokenKind::LParen => 1,
+            TokenKind::Times | TokenKind::Divide => 2,
+            TokenKind::Plus | TokenKind::Minus => 4,
+             _ => 0
+        }
+    } 
+}
+
+impl Token {
+    fn new(kind: TokenKind, value: Option<i32>) -> Token {
+        Token {
+            kind: kind,
+            value: value
+        }
+    }
+
+    fn new_kind(kind: TokenKind) -> Token {
+        Token::new(kind, None)
+    }
+
+    fn is_op(&self) -> bool {
+        match self.kind {
+            TokenKind::Plus|TokenKind::Minus|TokenKind::Times|TokenKind::Divide => true,
+                _ => false
+                
+        }
+    }
 }
 
 fn lex(input: &String) -> VecDeque<Token> {
@@ -29,37 +64,30 @@ fn lex(input: &String) -> VecDeque<Token> {
                     s.push(bytes[i] as char);
                     i += 1;
                 }
-                q.push_back(Token {
-                    kind: TokenKind::Number,
-                    value: Some(s.parse().unwrap())
-                });
+                q.push_back(Token::new(TokenKind::Number, Some(s.parse().unwrap())));
             },
             '+' => {
-                q.push_back(Token {
-                    kind: TokenKind::Plus,
-                    value: None
-                });
-                i += 1;
+                q.push_back(Token::new_kind(TokenKind::Plus));
+               i += 1;
             },
             '-' => {
-                q.push_back(Token {
-                    kind: TokenKind::Minus,
-                    value: None
-                });
+                q.push_back(Token::new_kind(TokenKind::Minus));
                 i += 1;
             },
             '*' => {
-                q.push_back(Token {
-                    kind: TokenKind::Times,
-                    value: None
-                });
+                q.push_back(Token::new_kind(TokenKind::Times));
                 i += 1;
             },
             '/' => {
-                q.push_back(Token {
-                    kind: TokenKind::Divide,
-                    value: None
-                });
+                q.push_back(Token::new_kind(TokenKind::Divide));
+                i += 1;
+            },
+            '(' => {
+                q.push_back(Token::new_kind(TokenKind::LParen));
+                i += 1;
+            },
+            ')' => {
+                q.push_back(Token::new_kind(TokenKind::RParen));
                 i += 1;
             },
             _ => i += 1
@@ -69,13 +97,52 @@ fn lex(input: &String) -> VecDeque<Token> {
     q
 }
 
+fn shunting_yard(q: &mut VecDeque<Token>) -> VecDeque<Token> {
+    let mut rpn = VecDeque::<Token>::new();
+    let mut op = VecDeque::<Token>::new();
+
+    while !q.is_empty() {
+        let token = q.pop_front().unwrap();
+        if token.kind == TokenKind::Number {
+            rpn.push_back(token);
+        }
+        else if token.is_op() {
+            while !op.is_empty() && 
+                op.back().unwrap().is_op() && 
+                op.front().unwrap().kind != TokenKind::LParen && 
+                op.back().unwrap().kind.precedence() < token.kind.precedence() {
+                rpn.push_back(op.pop_back().unwrap());
+            }
+            op.push_back(token);
+        }
+        else if token.kind == TokenKind::LParen {
+            op.push_back(token);
+        }
+        else if token.kind == TokenKind::RParen {
+            while !op.is_empty() && op.front().unwrap().kind != TokenKind::LParen {
+                assert!(!op.is_empty());
+                rpn.push_back(op.pop_back().unwrap());
+            }
+
+            assert!(op.back().unwrap().kind == TokenKind::LParen);
+            op.pop_back();
+        }
+    }
+
+    while !op.is_empty() {
+        rpn.push_back(op.pop_back().unwrap());
+    }
+
+    rpn
+}
+
 fn main() {
     let mut input = String::new();
     let _ = io::stdin().read_line(&mut input);
 
     let mut q = lex(&input);
-    while !q.is_empty() {
-        let val = q.pop_front();
-        println!("{:#?}", val);
+    let mut rpn = shunting_yard(&mut q);
+    while !rpn.is_empty() {
+        println!("{:#?}", rpn.pop_back());
     }
 }
