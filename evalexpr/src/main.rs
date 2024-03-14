@@ -119,7 +119,7 @@ fn shunting_yard(q: &mut VecDeque<Token>) -> VecDeque<Token> {
             op.push_back(token);
         }
         else if token.kind == TokenKind::RParen {
-            while !op.is_empty() && op.front().unwrap().kind != TokenKind::LParen {
+            while !op.is_empty() && op.back().unwrap().kind != TokenKind::LParen {
                 assert!(!op.is_empty());
                 rpn.push_back(op.pop_back().unwrap());
             }
