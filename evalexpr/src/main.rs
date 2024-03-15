@@ -44,9 +44,8 @@ impl Token {
 
     fn is_op(&self) -> bool {
         match self.kind {
-            TokenKind::Plus|TokenKind::Minus|TokenKind::Times|TokenKind::Divide => true,
-                _ => false
-                
+            TokenKind::Plus|TokenKind::Minus|TokenKind::Times|TokenKind::Divide|TokenKind::LParen| TokenKind::RParen => true,
+            _ => false
         }
     }
 }
@@ -106,11 +105,11 @@ fn shunting_yard(q: &mut VecDeque<Token>) -> VecDeque<Token> {
         if token.kind == TokenKind::Number {
             rpn.push_back(token);
         }
-        else if token.is_op() {
+        else if token.is_op() && token.kind != TokenKind::LParen {
             while !op.is_empty() && 
                 op.back().unwrap().is_op() && 
-                op.front().unwrap().kind != TokenKind::LParen && 
-                op.back().unwrap().kind.precedence() < token.kind.precedence() {
+                op.back().unwrap().kind != TokenKind::LParen && 
+                op.back().unwrap().kind.precedence() <= token.kind.precedence() {
                 rpn.push_back(op.pop_back().unwrap());
             }
             op.push_back(token);
@@ -136,13 +135,46 @@ fn shunting_yard(q: &mut VecDeque<Token>) -> VecDeque<Token> {
     rpn
 }
 
+fn evaluate(rpn: &mut VecDeque<Token>) -> i32 {
+    let mut tmp = VecDeque::<Token>::new();
+    while !rpn.is_empty() {
+        let token = rpn.pop_front().unwrap();
+        if token.is_op() {
+            let y = tmp.pop_front().unwrap();
+            let x = tmp.pop_front().unwrap();
+            tmp.push_front(
+                Token::new(
+                    TokenKind::Number,
+                    Some(
+                        match token.kind {
+                            TokenKind::Plus => y.value.unwrap() + x.value.unwrap(),
+                            TokenKind::Minus => y.value.unwrap() - x.value.unwrap(),
+                            TokenKind::Times => y.value.unwrap() * x.value.unwrap(),
+                            TokenKind::Divide => y.value.unwrap() / x.value.unwrap(),
+                            _ => 0
+                        }
+                    )
+                )
+            );
+        }
+        else {
+            tmp.push_front(token);
+        }
+    }
+
+    tmp.pop_back().unwrap().value.unwrap()
+}
+
 fn main() {
     let mut input = String::new();
     let _ = io::stdin().read_line(&mut input);
 
     let mut q = lex(&input);
     let mut rpn = shunting_yard(&mut q);
+    /*
     while !rpn.is_empty() {
         println!("{:#?}", rpn.pop_back());
     }
+    */
+    println!("{0}", evaluate(&mut rpn));
 }
