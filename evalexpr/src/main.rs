@@ -43,13 +43,18 @@ impl Token {
     }
 
     fn is_op(&self) -> bool {
+        // not really useful but prettier than using multiple ifs :\
         match self.kind {
-            TokenKind::Plus|TokenKind::Minus|TokenKind::Times|TokenKind::Divide|TokenKind::LParen| TokenKind::RParen => true,
+            TokenKind::Plus|TokenKind::Minus => true,
+            TokenKind::Times|TokenKind::Divide => true,
             _ => false
         }
     }
 }
 
+/**
+ * TODO: refactor this ugly code
+ */
 fn lex(input: &String) -> VecDeque<Token> {
     let mut q = VecDeque::<Token>::new();
 
@@ -105,10 +110,9 @@ fn shunting_yard(q: &mut VecDeque<Token>) -> VecDeque<Token> {
         if token.kind == TokenKind::Number {
             rpn.push_back(token);
         }
-        else if token.is_op() && token.kind != TokenKind::LParen {
+        else if token.is_op() {
             while !op.is_empty() && 
                 op.back().unwrap().is_op() && 
-                op.back().unwrap().kind != TokenKind::LParen && 
                 op.back().unwrap().kind.precedence() <= token.kind.precedence() {
                 rpn.push_back(op.pop_back().unwrap());
             }
