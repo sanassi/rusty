@@ -1,1 +1,1 @@
-useless rust projects to get more comfortable with the language
+useless rust stuff to get more comfortable with the language
